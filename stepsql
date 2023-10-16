@@ -1,0 +1,381 @@
+/*
+PL/SQL + Spring MVC (4 sessions, 12 sessions)
+Objectives:
+
+- plsql basics
+- procedures
+- functions
+- triggers
+- sequences
+- synonyms
+*/
+
+/*
+why we need pl/sql
+what is pl/sql
+
+SQL: select, insert, update, delete, create, alter, drop
+
+variables, conditional statements, loops, etc.
+
+SQL: declarative programming: what
+
+la pinoz: english retreat pizza
+
+select id, name from employees;
+
+imperative programming: how
+
+1, take a cup of flour
+2, make a dough
+3, ...
+
+i want to update the salary of all the employees who are manager based on their
+performance
+
+declarative
+fetch all the employees who are managers
+update the salary based on their performance.
+
+
+SQL + Programming Language Syntax = PL/SQL
+
+SQL ANSI Standard
+
+PL/SQL : Vendor Specific
+
+SQL Server : T-SQL
+
+Variables
+Conditional Statements
+*/ 
+set serveroutput on
+begin
+dbms_output.put_line('hello, plsql');
+end;
+
+-- variables
+set serveroutput on
+declare
+v_name varchar2(45);
+begin
+v_name := 'pavan';
+dbms_output.put_line('hello, '||v_name);
+end;
+
+
+-- normal sql
+select * from employees;
+
+-- select statement in pl/sql block should always be select..into
+declare
+v_name varchar2(30);
+v_salary number;
+begin
+select first_name, salary into v_name, v_salary from employees where emp_id = 1233;
+dbms_output.put_line('First name : '||v_name||' Salary : '||v_salary);
+end;
+
+begin
+select * from employees;
+end;
+
+-- error wala block
+/*
+exact fetch returns more than requested number of rows
+*/
+declare
+v_name varchar2(30);
+v_salary number;
+begin
+select first_name, salary into v_name, v_salary from employees;
+dbms_output.put_line('First name : '||v_name||' Salary : '||v_salary);
+end;
+
+-- error wala block
+/*
+no data found
+*/
+declare
+v_name varchar2(30);
+v_salary number;
+begin
+select first_name, salary into v_name, v_salary from employees where emp_id = 0;
+dbms_output.put_line('First name : '||v_name||' Salary : '||v_salary);
+end;
+
+select first_name, salary from employees where emp_id = 0;
+
+set serveroutput on
+declare
+v_name varchar2(30);
+v_salary number;
+begin
+select first_name, salary into v_name, v_salary from employees where emp_id = 0;
+dbms_output.put_line('First name : '||v_name||' Salary : '||v_salary);
+exception
+when NO_DATA_FOUND then
+dbms_output.put_line('No data found');
+end;
+
+-- conditional statements
+
+set serveroutput on
+
+select * from employees;
+
+describe employees;
+
+-- employee salary > 7000
+declare
+v_salary number;
+begin
+select salary into v_salary from employees where emp_id = 1233;
+if v_salary > 7000 then
+dbms_output.put_line('Your salary would be incremented, take loan!');
+else
+dbms_output.put_line('Your salary would not get incremented, take loan!');
+end if;
+end;
+
+
+declare
+v_salary employees.salary%TYPE;
+begin
+select salary into v_salary from employees where emp_id = 1233;
+if v_salary > 7000 then
+dbms_output.put_line('Your salary would be incremented, take loan!');
+else
+dbms_output.put_line('Your salary would not get incremented, take loan!');
+end if;
+end;
+
+describe employees;
+
+declare
+v_salary employees.salary%TYPE;
+begin
+select salary into v_salary from employees where emp_id = 1212;
+if v_salary > 7000 then
+dbms_output.put_line('Your salary would be incremented, take loan!');
+elsif v_salary > 5000 then
+dbms_output.put_line('Your salary would be incremented by 10%, go for ola S1 Air!');
+else
+dbms_output.put_line('Your salary would not get incremented, take loan!');
+end if;
+end;
+
+
+select * from employees;
+
+-- %TYPE and %ROWTYPE
+
+-- loops
+
+set serveroutput on
+
+
+select round(avg(salary), 2) from employees;
+ -- 6000
+ 
+update employees set salary = salary + 10;
+
+-- TRG_JOB_CHANGE
+-- dictionary: Oracle
+select * from dictionary;
+
+select * from user_tab_columns where table_name = 'EMPLOYEES';
+
+select * from user_source where name = 'TRG_JOB_CHANGE';
+
+alter trigger TRG_EMP_UPDATE disable;
+alter table employees disable all triggers;
+
+select * from user_triggers where TABLE_NAME = 'EMPLOYEES';
+
+declare
+v_avg number;
+begin
+select avg(salary) into v_avg from employees; -- i = 0
+loop
+update employees set salary = salary + 100; -- print i
+select avg(salary) into v_avg from employees; -- i++
+exit when v_avg > 6000; -- while (i <= 10)
+end loop;
+dbms_output.put_line('Salary updated');
+end;
+
+set serveroutput on
+-- objective
+-- named blocks - procedures and functions
+
+-- every block of pl/sql code gets compiled and then executed.
+
+-- sql server: stored procedures and stored functions.
+
+-- procedures:  procedures can have dml statements (insert, update, delete)
+create OR REPLACE procedure proc_say_hello
+as
+begin
+dbms_output.put_line('Hello, from Procedure');
+end;
+
+-- related to procedures - dictionary - user_procedures
+select * from user_procedures where object_name='PROC_SAY_HELLO';
+
+SELECT * FROM DICTIONARY WHERE TABLE_NAME LIKE '%PROCED%';
+
+SELECT * FROM USER_OBJECTS WHERE OBJECT_NAME = 'PROC_SAY_HELLO';
+
+SELECT * FROM USER_SOURCE WHERE NAME = 'PROC_SAY_HELLO';
+
+SET SERVEROUTPUT ON
+
+EXEC PROC_SAY_HELLO;
+
+-- procedure can accept parameters - and they can be optional
+create OR REPLACE procedure proc_say_hello(v_name varchar2 default 'Jim')
+as
+begin
+dbms_output.put_line('Hello, '||v_name);
+end;
+
+exec proc_say_hello;
+exec proc_say_hello('Sherlock');
+
+create OR REPLACE procedure proc_say_hello(
+v_name varchar2 default 'Jim',
+v_age number default 18
+)
+as
+begin
+dbms_output.put_line('Hello, '||v_name);
+dbms_output.put_line('and your age is '||v_age);
+end;
+
+exec proc_say_hello;
+exec proc_say_hello('Sherlock');
+exec proc_say_hello('Sherlock', 33);
+
+-- jim, 33
+exec proc_say_hello(v_age => 33);
+exec proc_say_hello(v_age => 33, v_name => 'Ovesh');
+
+-- invalid, cannot mix name parameters and positional parameters
+exec proc_say_hello(v_age => 33,'Ovesh');
+
+create OR REPLACE procedure proc_say_hello(
+v_prodid products.prodid%TYPE,
+v_prodname products.prodname%TYPE
+)
+as
+begin
+insert into products (prodid, prodname) values (v_prodid, v_prodname);
+end;
+
+
+select * from employees;
+
+select * from departmentexample;
+
+
+desc departments;
+
+select * from user_tab_columns where table_name = 'DEPARTMENTS';
+
+
+exec proc_say_hello(1, 'iphone 12');
+
+
+select * from products;
+desc products;
+
+drop procedure proc_say_hello;
+
+begin
+proc_say_hello(2, 'iphone 13');
+end;
+
+select * from productslog;
+
+create table productslog
+(
+    operation varchar2(45),
+    username varchar2(10),
+    timestamp date
+);
+
+select * from productslog;
+
+-- insert on product table, productslog pe entry chahiye
+-- insert statement
+-- procedure: procedure call
+
+
+
+-- functions:  functions cannot have dml statements (insert, update, delete)
+-- avg, count, min, max, len, etc  are builtin functions.
+-- we can also create user defined functions.
+-- anonymous blocks
+
+
+
+
+
+
+
+
+
+-- triggers
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
